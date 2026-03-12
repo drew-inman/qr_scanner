@@ -7,4 +7,7 @@ abstract final class AppStrings {
   static const String scanErrorGeneric = 'An error occurred. Please try again.';
   static const String copiedToClipboard = 'Copied to clipboard';
   static const String copyButtonLabel = 'Copy';
+  static const String generateQrButtonLabel = 'Generate QR';
+  static const String historyLabel = 'HISTORY';
+  static const String scanAgainButtonLabel = 'Scan again';
 }

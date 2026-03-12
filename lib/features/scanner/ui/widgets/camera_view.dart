@@ -16,12 +16,7 @@ class CameraView extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        bottomLeft: Radius.circular(24),
-        bottomRight: Radius.circular(24),
-      ),
-      child: ColoredBox(
+    return ColoredBox(
         color: colorScheme.surfaceContainerLowest,
         child: MobileScanner(
           controller: controller,
@@ -64,7 +59,8 @@ class CameraView extends StatelessWidget {
             );
           },
         ),
-      ),
     );
   }
 }
+
+

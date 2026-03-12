@@ -14,24 +14,28 @@ final class ScannerInitial extends ScannerState {
   const ScannerInitial();
 }
 
-/// Camera is active. [lastResult] is null until first successful scan.
+/// Camera is active. [lastResult] is the most recent scan, null until first scan.
+/// [history] contains all prior scans in reverse-chronological order.
 final class ScannerScanning extends ScannerState {
-  const ScannerScanning({this.lastResult});
+  const ScannerScanning({this.lastResult, this.history = const []});
 
   final ScanResult? lastResult;
+  final List<ScanResult> history;
 
   @override
-  List<Object?> get props => [lastResult];
+  List<Object?> get props => [lastResult, history];
 }
 
 /// A QR code was successfully decoded.
+/// [history] contains all scans that preceded [result], newest first.
 final class ScannerQrFound extends ScannerState {
-  const ScannerQrFound({required this.result});
+  const ScannerQrFound({required this.result, this.history = const []});
 
   final ScanResult result;
+  final List<ScanResult> history;
 
   @override
-  List<Object?> get props => [result];
+  List<Object?> get props => [result, history];
 }
 
 /// An error occurred (e.g. permission denied, hardware failure).

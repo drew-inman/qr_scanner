@@ -43,6 +43,7 @@ class ScannerBloc extends Bloc<ScannerEvent, ScannerState> {
     QrDetected event,
     Emitter<ScannerState> emit,
   ) async {
+    if (state is! ScannerScanning) return;
     final barcodes = event.capture.barcodes;
     if (barcodes.isEmpty) return;
 
@@ -50,12 +51,31 @@ class ScannerBloc extends Bloc<ScannerEvent, ScannerState> {
     final raw = barcode.rawValue;
     if (raw == null || raw.isEmpty) return;
 
+    // Push the previous result into history before replacing it.
+    final previousResult = switch (state) {
+      ScannerQrFound(:final result) => result,
+      ScannerScanning(:final lastResult) => lastResult,
+      _ => null,
+    };
+    final previousHistory = switch (state) {
+      ScannerQrFound(:final history) => history,
+      ScannerScanning(:final history) => history,
+      _ => const <ScanResult>[],
+    };
+    final newHistory = previousResult != null
+        ? [previousResult, ...previousHistory]
+        : previousHistory;
+
     final result = ScanResult(
       rawValue: raw,
       scannedAt: DateTime.now(),
       format: barcode.format,
     );
-    emit(ScannerQrFound(result: result));
+    // Include the new result in history immediately so it persists regardless
+    // of whether the user taps "Scan again" or not.
+    emit(ScannerQrFound(result: result, history: [result, ...newHistory]));
+    // Pause immediately so the same code isn't detected repeatedly.
+    await _repository.pauseScanning();
   }
 
   Future<void> _onScannerPaused(
@@ -68,7 +88,12 @@ class ScannerBloc extends Bloc<ScannerEvent, ScannerState> {
       ScannerQrFound(:final result) => result,
       _ => null,
     };
-    emit(ScannerScanning(lastResult: lastResult));
+    final history = switch (state) {
+      ScannerScanning(:final history) => history,
+      ScannerQrFound(:final history) => history,
+      _ => const <ScanResult>[],
+    };
+    emit(ScannerScanning(lastResult: lastResult, history: history));
   }
 
   Future<void> _onScannerResumed(
@@ -76,7 +101,13 @@ class ScannerBloc extends Bloc<ScannerEvent, ScannerState> {
     Emitter<ScannerState> emit,
   ) async {
     await _repository.resumeScanning();
-    emit(const ScannerScanning());
+    // Clear the current result (show placeholder again) but preserve history.
+    final history = switch (state) {
+      ScannerQrFound(:final history) => history,
+      ScannerScanning(:final history) => history,
+      _ => const <ScanResult>[],
+    };
+    emit(ScannerScanning(history: history));
   }
 
   Future<void> _onScannerStopped(
